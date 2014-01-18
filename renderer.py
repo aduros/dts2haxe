@@ -48,6 +48,13 @@ def render (program):
                 w(">")
             else:
                 w(haxe_type)
+        elif type.arrow:
+            for ii, param in enumerate(type.params):
+                if ii > 0:
+                    w(" -> ")
+                if param.optional:
+                    w("?")
+                w_type(param.type)
         else:
             w_anonymous_type(type)
 

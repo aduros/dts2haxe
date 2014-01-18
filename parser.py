@@ -4,6 +4,7 @@ from pyparsing import *
 LPAR, RPAR, LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI, COMMA = map(Suppress, "()[]{}:;,")
 QUESTION = Literal("?").setResultsName("optional")
 ELLIPSES = Literal("...").setResultsName("varargs")
+ARROW = Literal("=>").setResultsName("arrow")
 
 # Keywords
 INTERFACE = Keyword("interface").setResultsName("interface")
@@ -16,10 +17,12 @@ ident = Word(alphas+"_", alphanums+"_").setResultsName("ident")
 
 paramList = Forward()
 propertyList = Forward()
+type_ = Forward()
 
 namedType = ident + Optional(LBRACK + RBRACK).setResultsName("array")
 anonymousType = propertyList
-type_ = Group(namedType | anonymousType).setResultsName("type")
+functionType = paramList.setResultsName("params") + ARROW + type_
+type_ << Group(namedType | anonymousType | functionType).setResultsName("type")
 
 propertyDef = Group(ident + Optional(QUESTION) + Optional(paramList).setResultsName("params") + COLON + type_)
 propertyList << LBRACE + ZeroOrMore(propertyDef + SEMI) + RBRACE
