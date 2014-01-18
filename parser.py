@@ -37,11 +37,11 @@ type_ << Group((namedType | anonymousType | functionType) + ZeroOrMore(Group(LBR
 
 # Properties
 field = ident + Optional(QUESTION) + Optional(paramList).setResultsName("params")
-applyMethod = paramList
-arrayAccess = LBRACK + Suppress(ident) + COLON + type_ + RBRACK
+invokeAccess = Group(paramList).setResultsName("invoke")
+dictionaryAccess = LBRACK + ident + COLON + Group(type_).setResultsName("dictionary") + RBRACK
 constructor = CONSTRUCTOR + paramList.setResultsName("params")
 propertyAttribs = ZeroOrMore(STATIC)
-propertyDef = Group(propertyAttribs + ((field | applyMethod | arrayAccess) + COLON + type_) | constructor)
+propertyDef = Group(propertyAttribs + (constructor | field | invokeAccess | dictionaryAccess) + Optional(COLON + type_))
 propertyList << LBRACE + ZeroOrMore(propertyDef + SEMI).setResultsName("props") + RBRACE
 
 # Parameters
@@ -61,7 +61,7 @@ classDecl = Group(CLASS + ident - extends - implements + Group(propertyList).set
 enumValue = Group(ident + Optional(EQUALS + Word(nums)))
 enumDecl = Group(ENUM + ident + LBRACE + ZeroOrMore(delimitedList(enumValue, ",")).setResultsName("vals") + Optional(COMMA) + RBRACE)
 moduleDecl = Group(DECLARE + MODULE + ident + LBRACE + ZeroOrMore(typeDecl).setResultsName("entries") + RBRACE)
-typeDecl << ZeroOrMore(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl | enumDecl | moduleDecl) + ZeroOrMore(SEMI)
+typeDecl << Suppress(ZeroOrMore(EXPORT)) + (varDecl | functionDecl | interfaceDecl | classDecl | enumDecl | moduleDecl) + ZeroOrMore(SEMI)
 
 program = ZeroOrMore(moduleDecl | typeDecl | SEMI)
 program.ignore(cppStyleComment)

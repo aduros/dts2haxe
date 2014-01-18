@@ -62,6 +62,10 @@ def render (program):
         w_type(type.type)
 
     def w_type (type, ignore_array=False):
+        if not type:
+            w("Dynamic")
+            return
+
         array_depth = len(type.array)
         if ignore_array:
             array_depth -= 1
@@ -79,15 +83,19 @@ def render (program):
         w(">" * array_depth)
 
     def w_anonymous_type (type):
-        wln("{")
-        begin_indent()
-        for ii, prop in enumerate(type.props):
-            if ii > 0:
-                wln(",")
-            w_param(prop)
-        wln()
-        end_indent()
-        w("}")
+        if len(type.props) == 1 and type.props[0].dictionary:
+            w("Dynamic<")
+            w_type(type.props[0].type)
+            w(">")
+        else:
+            begin_indent()
+            wln("{")
+            for prop in type.props:
+                if not prop.dictionary and not prop.invoke:
+                    w_param(prop)
+                    wln(",")
+            end_indent()
+            w("}")
 
     def w_property (prop, attributes=None):
         if prop.constructor:
