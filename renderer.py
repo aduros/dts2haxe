@@ -62,27 +62,26 @@ def render (program):
         w_type(type.type)
 
     def w_type (type, ignore_array=False):
+        array_depth = len(type.array)
+        if ignore_array:
+            array_depth -= 1
+        w("Array<" * array_depth)
+
         if type.params != "":
             w_func(type)
         elif type.ident:
             haxe_type = haxe_types.get(type.ident, type.ident)
             haxe_type = haxe_type[0].upper() + haxe_type[1:]
-            if type.array != "":
-                depth = len(type.array)
-                if ignore_array:
-                    depth -= 1
-                w("Array<" * depth)
-                w(haxe_type)
-                w(">" * depth)
-            else:
-                w(haxe_type)
+            w(haxe_type)
         else:
             w_anonymous_type(type)
+
+        w(">" * array_depth)
 
     def w_anonymous_type (type):
         wln("{")
         begin_indent()
-        for ii, prop in enumerate(type):
+        for ii, prop in enumerate(type.props):
             if ii > 0:
                 wln(",")
             w_param(prop)
@@ -91,6 +90,12 @@ def render (program):
         w("}")
 
     def w_property (prop, attributes=None):
+        if prop.constructor:
+            w("function new ")
+            w_params(prop.params)
+            w(" :Void")
+            return
+
         if prop.ident == "":
             w("// UNSUPPORTED: ")
 
@@ -136,7 +141,7 @@ def render (program):
                 w("?")
             w_ident(param.ident)
             w(" :")
-            w_type(param)
+            w_type(param.type)
 
     def w_params (params):
         w("(")

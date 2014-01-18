@@ -10,6 +10,7 @@ ARROW = Literal("=>").setResultsName("arrow")
 def kwd (name):
     return Keyword(name).setResultsName(name)
 CLASS = kwd("class").setResultsName("tsclass")
+CONSTRUCTOR = kwd("constructor")
 DECLARE = Optional(kwd("declare"))
 ENUM = kwd("enum")
 EXPORT = kwd("export")
@@ -29,28 +30,29 @@ type_ = Forward()
 typeDecl = Forward()
 
 # Types
-namedType = ident + ZeroOrMore(Group(LBRACK + RBRACK)).setResultsName("array")
+namedType = ident
 anonymousType = propertyList
 functionType = paramList.setResultsName("params") + ARROW + type_
-type_ << Group(namedType | anonymousType | functionType).setResultsName("type")
+type_ << Group((namedType | anonymousType | functionType) + ZeroOrMore(Group(LBRACK + RBRACK)).setResultsName("array")).setResultsName("type")
 
 # Properties
 field = ident + Optional(QUESTION) + Optional(paramList).setResultsName("params")
 applyMethod = paramList
 arrayAccess = LBRACK + Suppress(ident) + COLON + type_ + RBRACK
+constructor = CONSTRUCTOR + paramList.setResultsName("params")
 propertyAttribs = ZeroOrMore(STATIC)
-propertyDef = Group(propertyAttribs + (field | applyMethod | arrayAccess) + COLON + type_)
-propertyList << LBRACE + ZeroOrMore(propertyDef + SEMI) + RBRACE
+propertyDef = Group(propertyAttribs + ((field | applyMethod | arrayAccess) + COLON + type_) | constructor)
+propertyList << LBRACE + ZeroOrMore(propertyDef + SEMI).setResultsName("props") + RBRACE
 
 # Parameters
-argument = Optional(ident + COLON) + type_
 optional = ident + QUESTION + COLON + type_
 varargs = ELLIPSES + ident + COLON + type_
-paramDef = Group(argument | optional | varargs)
+argument = Optional(ident + COLON) + type_
+paramDef = Group(optional | argument | varargs)
 paramList << LPAR + Group(ZeroOrMore(delimitedList(paramDef, ","))) + RPAR
 
 varDecl = Group(DECLARE + VAR - ident + COLON + type_)
-functionDecl = Group(DECLARE + FUNCTION - ident + paramList + COLON + type_)
+functionDecl = Group(DECLARE + FUNCTION - ident + paramList.setResultsName("params") + COLON + type_)
 
 extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("extends")
 implements = Optional(IMPLEMENTS + Group(delimitedList(ident, ",")).setResultsName("implements"))
