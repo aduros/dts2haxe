@@ -7,11 +7,17 @@ ELLIPSES = Literal("...").setResultsName("varargs")
 ARROW = Literal("=>").setResultsName("arrow")
 
 # Keywords
-INTERFACE = Keyword("interface").setResultsName("interface")
-VAR = Keyword("var").setResultsName("var")
-FUNCTION = Keyword("function").setResultsName("function")
-DECLARE = Keyword("declare")
-EXTENDS = Keyword("extends")
+def kwd (name):
+    return Keyword(name).setResultsName(name)
+INTERFACE = kwd("interface")
+VAR = kwd("var")
+FUNCTION = kwd("function")
+CLASS = kwd("class").setResultsName("tsclass")
+STATIC = kwd("static")
+DECLARE = kwd("declare")
+EXTENDS = kwd("extends")
+IMPLEMENTS = kwd("implements")
+EXPORT = kwd("export")
 
 ident = Word(alphas+"_$", alphanums+"_$.").setResultsName("ident")
 
@@ -29,7 +35,8 @@ type_ << Group(namedType | anonymousType | functionType).setResultsName("type")
 field = ident + Optional(QUESTION) + Optional(paramList).setResultsName("params")
 applyMethod = paramList
 arrayAccess = LBRACK + Suppress(ident) + COLON + type_ + RBRACK
-propertyDef = Group((field | applyMethod | arrayAccess) + COLON + type_)
+propertyAttribs = ZeroOrMore(STATIC)
+propertyDef = Group(propertyAttribs + (field | applyMethod | arrayAccess) + COLON + type_)
 propertyList << LBRACE + ZeroOrMore(propertyDef + SEMI) + RBRACE
 
 # Parameters
@@ -41,9 +48,14 @@ paramList << LPAR + Group(ZeroOrMore(delimitedList(paramDef, ","))) + RPAR
 
 varDecl = Group(DECLARE + VAR - ident + COLON + type_)
 functionDecl = Group(DECLARE + FUNCTION - ident + paramList + COLON + type_)
-interfaceDecl = Group(INTERFACE + ident - Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("extends") + Group(propertyList).setResultsName("props"))
 
-module = ZeroOrMore(varDecl | functionDecl | interfaceDecl | SEMI)
+extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("extends")
+implements = Optional(IMPLEMENTS + Group(delimitedList(ident, ",")).setResultsName("implements"))
+interfaceDecl = Group(INTERFACE + ident - extends + Group(propertyList).setResultsName("props"))
+classDecl = Group(CLASS + ident - extends - implements + Group(propertyList).setResultsName("props"))
+typeDecl = ZeroOrMore(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl)
+
+module = ZeroOrMore(typeDecl + ZeroOrMore(SEMI))
 module.ignore(cppStyleComment)
 module.ignore(Regex(r"<.*?>"))
 

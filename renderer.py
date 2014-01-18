@@ -13,9 +13,10 @@ haxe_keywords = set([
     "using", "var", "while",
 ])
 
-class Class ():
+class HaxeClass ():
     interface = None
     var = None
+    tsclass = None
 
 def render (program):
     output = []
@@ -70,11 +71,14 @@ def render (program):
             w_anonymous_type(type)
 
     def w_anonymous_type (type):
-        w("{")
+        wln("{")
+        begin_indent()
         for ii, prop in enumerate(type):
             if ii > 0:
-                w(" ")
+                wln()
             w_property(prop)
+        wln()
+        end_indent()
         w("}")
 
     def w_property (prop, attributes=None):
@@ -85,6 +89,8 @@ def render (program):
             wln("@:native(\"%s\")" % prop.ident)
         if attributes:
             w(attributes)
+        if prop.static:
+            w("static ")
 
         method = prop.params != ""
         if method:
@@ -132,13 +138,28 @@ def render (program):
             w_param(param)
         w(")")
 
+    def w_extends (type):
+        if type.extends:
+            w(" extends ")
+            w_ident(type.extends.ident)
+        if type.implements:
+            wln()
+            begin_indent()
+            for ii, iface in enumerate(type.implements):
+                if ii > 0:
+                    wln()
+                w("implements ")
+                w_ident(iface)
+            end_indent()
+
     def w_class (ident, cl):
         wln("@:native(\"%s\")" % ident)
         w("extern class ")
         w_ident(ident)
-        if cl.interface and cl.interface.extends:
-            w(" extends ")
-            w_ident(cl.interface.extends.ident)
+        if cl.interface:
+            w_extends(cl.interface)
+        if cl.tsclass:
+            w_extends(cl.tsclass)
         wln()
         wln("{")
         begin_indent()
@@ -150,6 +171,10 @@ def render (program):
             for prop in cl.var.type:
                 w_property(prop, "static " if prop.ident != "new" else None)
                 wln()
+        if cl.tsclass:
+            for prop in cl.tsclass.props:
+                w_property(prop)
+                wln()
         end_indent()
         wln("}")
 
@@ -158,11 +183,13 @@ def render (program):
     for statement in program:
         cl = classes.get(statement.ident)
         if not cl:
-            cl = classes[statement.ident] = Class()
+            cl = classes[statement.ident] = HaxeClass()
         if statement.interface:
             cl.interface = statement
         elif statement.var:
             cl.var = statement
+        elif statement.tsclass:
+            cl.tsclass = statement
 
     for ident, cl in classes.iteritems():
         w_class(ident, cl)
