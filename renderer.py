@@ -27,6 +27,12 @@ def render (program):
     def end_indent():
         indent_stack.pop()
 
+    package_stack = []
+    def begin_package(name):
+        package_stack.append(name)
+    def end_package():
+        package_stack.pop()
+
     def w (text):
         if output and output[-1].endswith("\n"):
             output.extend(indent_stack)
@@ -153,7 +159,15 @@ def render (program):
             end_indent()
 
     def w_class (ident, cl):
-        wln("@:native(\"%s\")" % ident)
+        if package_stack:
+            w("package ")
+            for ii, package in enumerate(package_stack):
+                if ii > 0:
+                    w(".")
+                w(package)
+            wln(";")
+            wln()
+
         w("extern class ")
         w_ident(ident)
         if cl.interface:
@@ -178,20 +192,28 @@ def render (program):
         end_indent()
         wln("}")
 
-    # Combine interface and var declaration into single classes
-    classes = {}
-    for statement in program:
-        cl = classes.get(statement.ident)
-        if not cl:
-            cl = classes[statement.ident] = HaxeClass()
-        if statement.interface:
-            cl.interface = statement
-        elif statement.var:
-            cl.var = statement
-        elif statement.tsclass:
-            cl.tsclass = statement
+    def w_module (module):
+        # Combine interface, var, and class declarations into single Haxe classes
+        classes = {}
+        for statement in module:
+            if statement.module:
+                begin_package(statement.ident)
+                w_module(statement.entries)
+                end_package()
+            else:
+                cl = classes.get(statement.ident)
+                if not cl:
+                    cl = classes[statement.ident] = HaxeClass()
+                elif statement.interface:
+                    cl.interface = statement
+                elif statement.var:
+                    cl.var = statement
+                elif statement.tsclass:
+                    cl.tsclass = statement
 
-    for ident, cl in classes.iteritems():
-        w_class(ident, cl)
-        wln()
+        for ident, cl in classes.iteritems():
+            w_class(ident, cl)
+            wln()
+
+    w_module(program)
     return "".join(output)

@@ -9,21 +9,23 @@ ARROW = Literal("=>").setResultsName("arrow")
 # Keywords
 def kwd (name):
     return Keyword(name).setResultsName(name)
-INTERFACE = kwd("interface")
-VAR = kwd("var")
-FUNCTION = kwd("function")
 CLASS = kwd("class").setResultsName("tsclass")
-STATIC = kwd("static")
-DECLARE = kwd("declare")
-EXTENDS = kwd("extends")
-IMPLEMENTS = kwd("implements")
+DECLARE = Optional(kwd("declare"))
 EXPORT = kwd("export")
+EXTENDS = kwd("extends")
+FUNCTION = kwd("function")
+IMPLEMENTS = kwd("implements")
+INTERFACE = kwd("interface")
+MODULE = kwd("module")
+STATIC = kwd("static")
+VAR = kwd("var")
 
 ident = Word(alphas+"_$", alphanums+"_$.").setResultsName("ident")
 
 paramList = Forward()
 propertyList = Forward()
 type_ = Forward()
+typeDecl = Forward()
 
 # Types
 namedType = ident + ZeroOrMore(Group(LBRACK + RBRACK)).setResultsName("array")
@@ -53,11 +55,12 @@ extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("e
 implements = Optional(IMPLEMENTS + Group(delimitedList(ident, ",")).setResultsName("implements"))
 interfaceDecl = Group(INTERFACE + ident - extends + Group(propertyList).setResultsName("props"))
 classDecl = Group(CLASS + ident - extends - implements + Group(propertyList).setResultsName("props"))
-typeDecl = ZeroOrMore(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl)
+moduleDecl = Group(DECLARE + MODULE + ident + LBRACE + ZeroOrMore(typeDecl).setResultsName("entries") + RBRACE)
+typeDecl << ZeroOrMore(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl | moduleDecl) + ZeroOrMore(SEMI)
 
-module = ZeroOrMore(typeDecl + ZeroOrMore(SEMI))
-module.ignore(cppStyleComment)
-module.ignore(Regex(r"<.*?>"))
+program = ZeroOrMore(moduleDecl | typeDecl | SEMI)
+program.ignore(cppStyleComment)
+program.ignore(Regex(r"<.*?>"))
 
 def parseFile (file):
-    return module.parseFile(file, True)
+    return program.parseFile(file, True)
