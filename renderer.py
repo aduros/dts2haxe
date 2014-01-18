@@ -48,8 +48,23 @@ def render (program):
         if ident in haxe_keywords:
             w("_")
 
+    def w_func (type):
+        if len(type.params) == 0:
+            w("Void")
+        else:
+            for ii, param in enumerate(type.params):
+                if ii > 0:
+                    w(" -> ")
+                if param.optional:
+                    w("?")
+                w_type(param.type)
+        w(" -> ")
+        w_type(type.type)
+
     def w_type (type, ignore_array=False):
-        if type.ident:
+        if type.params != "":
+            w_func(type)
+        elif type.ident:
             haxe_type = haxe_types.get(type.ident, type.ident)
             haxe_type = haxe_type[0].upper() + haxe_type[1:]
             if type.array != "":
@@ -61,18 +76,6 @@ def render (program):
                 w(">" * depth)
             else:
                 w(haxe_type)
-        elif type.arrow:
-            if len(type.params) == 0:
-                w("Void")
-            else:
-                for ii, param in enumerate(type.params):
-                    if ii > 0:
-                        w(" -> ")
-                    if param.optional:
-                        w("?")
-                    w_type(param.type)
-            w(" -> ")
-            w_type(type.type)
         else:
             w_anonymous_type(type)
 
@@ -81,8 +84,8 @@ def render (program):
         begin_indent()
         for ii, prop in enumerate(type):
             if ii > 0:
-                wln()
-            w_property(prop)
+                wln(",")
+            w_param(prop)
         wln()
         end_indent()
         w("}")
@@ -118,7 +121,6 @@ def render (program):
                 w(">")
             else:
                 w_type(prop.type)
-        w(";")
 
     def w_param (param):
         if param.varargs:
@@ -134,7 +136,7 @@ def render (program):
                 w("?")
             w_ident(param.ident)
             w(" :")
-            w_type(param.type)
+            w_type(param)
 
     def w_params (params):
         w("(")
@@ -144,76 +146,90 @@ def render (program):
             w_param(param)
         w(")")
 
-    def w_extends (type):
-        if type.extends:
-            w(" extends ")
-            w_ident(type.extends.ident)
-        if type.implements:
-            wln()
-            begin_indent()
-            for ii, iface in enumerate(type.implements):
-                if ii > 0:
-                    wln()
-                w("implements ")
-                w_ident(iface)
-            end_indent()
+    def escape_package (package):
+        package = package.lower();
+        if package in haxe_keywords:
+            package += "_"
+        return package;
 
-    def w_class (ident, cl):
+    def w_package ():
         if package_stack:
             w("package ")
             for ii, package in enumerate(package_stack):
                 if ii > 0:
                     w(".")
-                w(package)
+                w(escape_package(package))
             wln(";")
             wln()
 
-        w("extern class ")
-        w_ident(ident)
-        if cl.interface:
-            w_extends(cl.interface)
+    def w_native (ident):
+        if package_stack:
+            wln("@:native(\"%s\")" % ".".join(package_stack + [ident]))
+
+    def w_class (cl):
+        w_native(cl.ident)
         if cl.tsclass:
-            w_extends(cl.tsclass)
-        wln()
-        wln("{")
-        begin_indent()
-        if cl.interface:
-            for prop in cl.interface.props:
+            w("extern class ")
+            w_ident(cl.ident)
+            if cl.extends:
+                w(" extends ")
+                w_ident(cl.extends.ident)
+            if cl.implements:
+                wln()
+                begin_indent()
+                for ii, iface in enumerate(cl.implements):
+                    if ii > 0:
+                        wln()
+                    w("implements ")
+                    w_ident(iface)
+                end_indent()
+            wln()
+            wln("{")
+            begin_indent()
+            for ii, prop in enumerate(cl.props):
                 w_property(prop)
-                wln()
-        if cl.var:
-            for prop in cl.var.type:
-                w_property(prop, "static " if prop.ident != "new" else None)
-                wln()
-        if cl.tsclass:
-            for prop in cl.tsclass.props:
-                w_property(prop)
-                wln()
-        end_indent()
-        wln("}")
+                wln(";")
+            end_indent()
+            w("}")
+
+        else:
+            w("typedef ")
+            w_ident(cl.ident)
+            wln(" = {")
+            begin_indent()
+            for ii, prop in enumerate(cl.props):
+                w_param(prop)
+                wln(",")
+            end_indent()
+            w("}")
 
     def w_module (module):
-        # Combine interface, var, and class declarations into single Haxe classes
-        classes = {}
+        global_vars = []
         for statement in module:
             if statement.module:
                 begin_package(statement.ident)
                 w_module(statement.entries)
                 end_package()
             else:
-                cl = classes.get(statement.ident)
-                if not cl:
-                    cl = classes[statement.ident] = HaxeClass()
-                elif statement.interface:
-                    cl.interface = statement
-                elif statement.var:
-                    cl.var = statement
-                elif statement.tsclass:
-                    cl.tsclass = statement
+                if statement.var:
+                    global_vars.append(statement)
+                else:
+                    w_package()
+                    w_class(statement)
+                    wln()
 
-        for ident, cl in classes.iteritems():
-            w_class(ident, cl)
-            wln()
+        if global_vars:
+            w_package()
+            if package_stack:
+                wln("@:native(\"%s\")" % ".".join(package_stack))
+            wln("extern class Globals")
+            wln("{")
+            begin_indent()
+            for var in global_vars:
+                w_property(var, "static ")
+                wln(";")
+            end_indent()
+            w("}")
 
     w_module(program)
     return "".join(output)
