@@ -1,3 +1,16 @@
+haxe_types = {
+    "any": "Dynamic",
+    "number": "Float",
+}
+
+haxe_keywords = set([
+    "break", "callback", "case", "cast", "catch", "class", "continue", "default", "do", "dynamic",
+    "else", "enum", "extends", "extern", "false", "for", "function", "if", "implements", "import",
+    "in", "inline", "interface", "never", "null", "override", "package", "private", "public",
+    "return", "static", "super", "switch", "this", "throw", "true", "try", "typedef", "untyped",
+    "using", "var", "while",
+])
+
 class Class ():
     interface = None
     var = None
@@ -7,7 +20,7 @@ def render (program):
 
     indent_stack = []
     def begin_indent():
-        indent_stack.append("\t")
+        indent_stack.append("    ")
     def end_indent():
         indent_stack.pop()
 
@@ -23,10 +36,18 @@ def render (program):
 
     def w_ident (ident):
         w(ident)
+        if ident in haxe_keywords:
+            w("_")
 
     def w_type (type):
         if type.ident:
-            w_ident(type.ident)
+            haxe_type = haxe_types.get(type.ident, type.ident).capitalize()
+            if type.array != "":
+                w("Array<")
+                w(haxe_type)
+                w(">")
+            else:
+                w(haxe_type)
         else:
             w_anonymous_type(type)
 
@@ -38,7 +59,12 @@ def render (program):
             w_property(prop)
         w("}")
 
-    def w_property (prop):
+    def w_property (prop, attributes=None):
+        if prop.ident in haxe_keywords:
+            wln("@:native(\"%s\")" % prop.ident)
+        if attributes:
+            w(attributes)
+
         method = prop.params != ""
         if method:
             w("function ")
@@ -52,13 +78,27 @@ def render (program):
                 w("?")
 
         w(" :")
-        w_type(prop.type)
+        if prop.ident == "new":
+            w("Void")
+        else:
+            w_type(prop.type)
         w(";")
 
     def w_param (param):
-        w_ident(param.ident)
-        w(" :")
-        w_type(param.type)
+        if param.varargs:
+            for ii in range(1, 10):
+                if ii > 1:
+                    w(", ")
+                w("?")
+                w_ident(param.ident+str(ii))
+                w(" :")
+                w_type(param.type)
+        else:
+            if param.optional:
+                w("?")
+            w_ident(param.ident)
+            w(" :")
+            w_type(param.type)
 
     def w_params (params):
         w("(")
@@ -69,9 +109,11 @@ def render (program):
         w(")")
 
     def w_class (ident, cl):
-        w("class ")
-        w(ident)
-        wln(" {")
+        wln("@:native(\"%s\")" % ident)
+        w("extern class ")
+        w_ident(ident)
+        wln()
+        wln("{")
         begin_indent()
         if cl.interface:
             for prop in cl.interface.props:
@@ -79,12 +121,12 @@ def render (program):
                 wln()
         if cl.var:
             for prop in cl.var.type:
-                w("static ")
-                w_property(prop)
+                w_property(prop, "static " if prop.ident != "new" else None)
                 wln()
         end_indent()
         wln("}")
 
+    # Combine interface and var declaration into single classes
     classes = {}
     for statement in program:
         cl = classes.get(statement.ident)

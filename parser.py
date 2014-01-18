@@ -2,8 +2,8 @@ from pyparsing import *
 
 # Symbols
 LPAR, RPAR, LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI, COMMA = map(Suppress, "()[]{}:;,")
-QUESTION = Literal("?")
-ELLIPSES = Literal("...")
+QUESTION = Literal("?").setResultsName("optional")
+ELLIPSES = Literal("...").setResultsName("varargs")
 
 # Keywords
 INTERFACE = Keyword("interface").setResultsName("interface")
@@ -17,12 +17,11 @@ ident = Word(alphas+"_", alphanums+"_").setResultsName("ident")
 paramList = Forward()
 propertyList = Forward()
 
-namedType = ident
+namedType = ident + Optional(LBRACK + RBRACK).setResultsName("array")
 anonymousType = propertyList
 type_ = Group(namedType | anonymousType).setResultsName("type")
 
-propertyDef = Group(ident + Optional(QUESTION).setResultsName("optional") + \
-        Optional(paramList).setResultsName("params") + COLON + type_)
+propertyDef = Group(ident + Optional(QUESTION) + Optional(paramList).setResultsName("params") + COLON + type_)
 propertyList << LBRACE + ZeroOrMore(propertyDef + SEMI) + RBRACE
 
 paramDef = Group(Optional(ELLIPSES) + ident + Optional(QUESTION) + COLON + type_)
