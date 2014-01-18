@@ -112,6 +112,9 @@ def render (program):
         wln("@:native(\"%s\")" % ident)
         w("extern class ")
         w_ident(ident)
+        if cl.interface and cl.interface.extends:
+            w(" extends ")
+            w_ident(cl.interface.extends.ident)
         wln()
         wln("{")
         begin_indent()

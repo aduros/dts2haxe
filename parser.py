@@ -29,7 +29,7 @@ paramList << LPAR + Group(ZeroOrMore(delimitedList(paramDef, ","))) + RPAR
 
 varDecl = Group(DECLARE + VAR + ident + COLON + type_)
 functionDecl = Group(DECLARE + FUNCTION + ident + paramList + COLON + type_)
-interfaceDecl = Group(INTERFACE + ident + Group(propertyList).setResultsName("props"))
+interfaceDecl = Group(INTERFACE + ident + Group(Optional(EXTENDS + ident)).setResultsName("extends") + Group(propertyList).setResultsName("props"))
 
 module = ZeroOrMore(varDecl | functionDecl | interfaceDecl | SEMI)
 
