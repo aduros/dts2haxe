@@ -1,3 +1,5 @@
+import pyparsing
+
 haxe_types = {
     "any": "Dynamic",
     "number": "Float",
@@ -39,22 +41,31 @@ def render (program):
         if ident in haxe_keywords:
             w("_")
 
-    def w_type (type):
+    def w_type (type, ignore_array=False):
         if type.ident:
-            haxe_type = haxe_types.get(type.ident, type.ident).capitalize()
+            haxe_type = haxe_types.get(type.ident, type.ident)
+            haxe_type = haxe_type[0].upper() + haxe_type[1:]
             if type.array != "":
-                w("Array<")
+                depth = len(type.array)
+                if ignore_array:
+                    depth -= 1
+                w("Array<" * depth)
                 w(haxe_type)
-                w(">")
+                w(">" * depth)
             else:
                 w(haxe_type)
         elif type.arrow:
-            for ii, param in enumerate(type.params):
-                if ii > 0:
-                    w(" -> ")
-                if param.optional:
-                    w("?")
-                w_type(param.type)
+            if len(type.params) == 0:
+                w("Void")
+            else:
+                for ii, param in enumerate(type.params):
+                    if ii > 0:
+                        w(" -> ")
+                    if param.optional:
+                        w("?")
+                    w_type(param.type)
+            w(" -> ")
+            w_type(type.type)
         else:
             w_anonymous_type(type)
 
@@ -67,6 +78,9 @@ def render (program):
         w("}")
 
     def w_property (prop, attributes=None):
+        if prop.ident == "":
+            w("// UNSUPPORTED: ")
+
         if prop.ident in haxe_keywords:
             wln("@:native(\"%s\")" % prop.ident)
         if attributes:
@@ -81,14 +95,17 @@ def render (program):
         else:
             w("var ")
             w_ident(prop.ident)
-            if prop.optional:
-                w("?")
 
         w(" :")
         if prop.ident == "new":
             w("Void")
         else:
-            w_type(prop.type)
+            if prop.optional:
+                w("Null<")
+                w_type(prop.type)
+                w(">")
+            else:
+                w_type(prop.type)
         w(";")
 
     def w_param (param):
@@ -99,7 +116,7 @@ def render (program):
                 w("?")
                 w_ident(param.ident+str(ii))
                 w(" :")
-                w_type(param.type)
+                w_type(param.type, ignore_array=True)
         else:
             if param.optional:
                 w("?")
