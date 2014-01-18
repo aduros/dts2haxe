@@ -186,9 +186,19 @@ def render (program):
             wln()
             wln("{")
             begin_indent()
-            for ii, prop in enumerate(cl.props):
+            for prop in cl.props:
                 w_property(prop)
                 wln(";")
+            end_indent()
+            w("}")
+
+        elif cl.enum:
+            w("@:fakeEnum(Int) extern enum ")
+            w_ident(cl.ident)
+            wln(" {")
+            begin_indent()
+            for value in cl.vals:
+                wln("%s;" % value.ident)
             end_indent()
             w("}")
 
@@ -197,7 +207,7 @@ def render (program):
             w_ident(cl.ident)
             wln(" = {")
             begin_indent()
-            for ii, prop in enumerate(cl.props):
+            for prop in cl.props:
                 w_param(prop)
                 wln(",")
             end_indent()

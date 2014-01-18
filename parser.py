@@ -1,7 +1,7 @@
 from pyparsing import *
 
 # Symbols
-LPAR, RPAR, LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI, COMMA = map(Suppress, "()[]{}:;,")
+LPAR, RPAR, LBRACK, RBRACK, LBRACE, RBRACE, COLON, SEMI, COMMA, EQUALS = map(Suppress, "()[]{}:;,=")
 QUESTION = Literal("?").setResultsName("optional")
 ELLIPSES = Literal("...").setResultsName("varargs")
 ARROW = Literal("=>").setResultsName("arrow")
@@ -11,6 +11,7 @@ def kwd (name):
     return Keyword(name).setResultsName(name)
 CLASS = kwd("class").setResultsName("tsclass")
 DECLARE = Optional(kwd("declare"))
+ENUM = kwd("enum")
 EXPORT = kwd("export")
 EXTENDS = kwd("extends")
 FUNCTION = kwd("function")
@@ -55,8 +56,10 @@ extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("e
 implements = Optional(IMPLEMENTS + Group(delimitedList(ident, ",")).setResultsName("implements"))
 interfaceDecl = Group(INTERFACE + ident - extends + Group(propertyList).setResultsName("props"))
 classDecl = Group(CLASS + ident - extends - implements + Group(propertyList).setResultsName("props"))
+enumValue = Group(ident + Optional(EQUALS + Word(nums)))
+enumDecl = Group(ENUM + ident + LBRACE + ZeroOrMore(delimitedList(enumValue, ",")).setResultsName("vals") + Optional(COMMA) + RBRACE)
 moduleDecl = Group(DECLARE + MODULE + ident + LBRACE + ZeroOrMore(typeDecl).setResultsName("entries") + RBRACE)
-typeDecl << ZeroOrMore(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl | moduleDecl) + ZeroOrMore(SEMI)
+typeDecl << ZeroOrMore(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl | enumDecl | moduleDecl) + ZeroOrMore(SEMI)
 
 program = ZeroOrMore(moduleDecl | typeDecl | SEMI)
 program.ignore(cppStyleComment)
