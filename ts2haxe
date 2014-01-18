@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+import parser, renderer
+
+parsed = parser.parseFile("test.d.ts")
+# print(parsed[0].props[1].params)
+print(renderer.render(parsed))
