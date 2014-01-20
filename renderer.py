@@ -49,6 +49,7 @@ def render (program):
             w("_")
 
     def w_func (type):
+        w("(")
         if len(type.params) == 0:
             w("Void")
         else:
@@ -60,6 +61,7 @@ def render (program):
                 w_type(param.type)
         w(" -> ")
         w_type(type.type)
+        w(")")
 
     def w_type (type, ignore_array=False):
         if not type:
@@ -92,12 +94,12 @@ def render (program):
             wln("{")
             for prop in type.props:
                 if not prop.dictionary and not prop.invoke:
-                    w_param(prop)
+                    w_property(prop, typedef=True)
                     wln(",")
             end_indent()
             w("}")
 
-    def w_property (prop, attributes=None):
+    def w_property (prop, attributes=None, typedef=False):
         if prop.constructor:
             w("function new ")
             w_params(prop.params)
@@ -116,12 +118,18 @@ def render (program):
 
         method = prop.params != ""
         if method:
-            w("function ")
-            w_ident(prop.ident)
-            w(" ")
-            w_params(prop.params)
+            if typedef:
+                w_ident(prop.ident)
+                w(" :")
+                w_func(prop)
+                return
+            else:
+                w("function ")
+                w_ident(prop.ident)
+                w(" ")
+                w_params(prop.params)
         else:
-            w("var ")
+            if not typedef: w("var ")
             w_ident(prop.ident)
 
         w(" :")
@@ -167,7 +175,7 @@ def render (program):
 
     def w_package ():
         if package_stack:
-            w("package ")
+            w("// package ")
             for ii, package in enumerate(package_stack):
                 if ii > 0:
                     w(".")
@@ -187,15 +195,15 @@ def render (program):
             if cl.extends:
                 w(" extends ")
                 w_ident(cl.extends.ident)
-            if cl.implements:
-                wln()
-                begin_indent()
-                for ii, iface in enumerate(cl.implements):
-                    if ii > 0:
-                        wln()
-                    w("implements ")
-                    w_ident(iface)
-                end_indent()
+            # if cl.implements:
+            #     wln()
+            #     begin_indent()
+            #     for ii, iface in enumerate(cl.implements):
+            #         if ii > 0:
+            #             wln()
+            #         w("implements ")
+            #         w_ident(iface)
+            #     end_indent()
             wln()
             wln("{")
             begin_indent()
@@ -218,13 +226,8 @@ def render (program):
         else:
             w("typedef ")
             w_ident(cl.ident)
-            wln(" = {")
-            begin_indent()
-            for prop in cl.props:
-                w_param(prop)
-                wln(",")
-            end_indent()
-            w("}")
+            w(" = ")
+            w_anonymous_type(cl)
 
     def w_module (module):
         global_vars = []
@@ -234,7 +237,7 @@ def render (program):
                 w_module(statement.entries)
                 end_package()
             else:
-                if statement.var:
+                if statement.var or statement.function:
                     global_vars.append(statement)
                 else:
                     w_package()

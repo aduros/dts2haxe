@@ -51,8 +51,9 @@ argument = Optional(ident + COLON) + type_
 paramDef = Group(optional | argument | varargs)
 paramList << LPAR + Group(ZeroOrMore(delimitedList(paramDef, ","))) + RPAR
 
+# Global vars and functions
 varDecl = Group(DECLARE + VAR - ident + COLON + type_)
-functionDecl = Group(DECLARE + FUNCTION - ident + paramList.setResultsName("params") + COLON + type_)
+functionDecl = Group(DECLARE + FUNCTION - ident + Group(paramList).setResultsName("params") + COLON + type_)
 
 extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("extends")
 implements = Optional(IMPLEMENTS + Group(delimitedList(ident, ",")).setResultsName("implements"))
