@@ -2,7 +2,9 @@ import pyparsing
 
 haxe_types = {
     "any": "Dynamic",
+    "Object": "Dynamic",
     "number": "Float",
+    "boolean": "Bool",
 }
 
 haxe_keywords = set([
@@ -85,10 +87,15 @@ def render (program):
         w(">" * array_depth)
 
     def w_anonymous_type (type):
-        if len(type.props) == 1 and type.props[0].dictionary:
-            w("Dynamic<")
-            w_type(type.props[0].type)
-            w(">")
+        if len(type.props) == 1:
+            # Special case for apply and array access
+            single_prop = type.props[0]
+            if single_prop.invoke:
+                w_func(single_prop.invoke)
+            elif single_prop.dictionary:
+                w("Dynamic<")
+                w_type(single_prop.type)
+                w(">")
         else:
             begin_indent()
             wln("{")
@@ -174,14 +181,15 @@ def render (program):
         return package;
 
     def w_package ():
-        if package_stack:
-            w("// package ")
-            for ii, package in enumerate(package_stack):
-                if ii > 0:
-                    w(".")
-                w(escape_package(package))
-            wln(";")
-            wln()
+        pass
+        # if package_stack:
+        #     w("package ")
+        #     for ii, package in enumerate(package_stack):
+        #         if ii > 0:
+        #             w(".")
+        #         w(escape_package(package))
+        #     wln(";")
+        #     wln()
 
     def w_native (ident):
         if package_stack:
@@ -195,15 +203,15 @@ def render (program):
             if cl.extends:
                 w(" extends ")
                 w_ident(cl.extends.ident)
-            # if cl.implements:
-            #     wln()
-            #     begin_indent()
-            #     for ii, iface in enumerate(cl.implements):
-            #         if ii > 0:
-            #             wln()
-            #         w("implements ")
-            #         w_ident(iface)
-            #     end_indent()
+            if cl.implements:
+                wln()
+                begin_indent()
+                for ii, iface in enumerate(cl.implements):
+                    if ii > 0:
+                        wln()
+                    w("// implements ")
+                    w_ident(iface)
+                end_indent()
             wln()
             wln("{")
             begin_indent()
@@ -236,13 +244,13 @@ def render (program):
                 begin_package(statement.ident)
                 w_module(statement.entries)
                 end_package()
+            elif statement.var or statement.function:
+                global_vars.append(statement)
             else:
-                if statement.var or statement.function:
-                    global_vars.append(statement)
-                else:
-                    w_package()
-                    w_class(statement)
-                    wln()
+                w_package()
+                w_class(statement)
+                wln()
+                wln()
 
         if global_vars:
             w_package()
