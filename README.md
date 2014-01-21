@@ -30,3 +30,7 @@ the output looks like.
 * Certain weird JS patterns that don't map well to Haxe.
 * Splitting generated Haxe into multiple .hx files.
 * Importing external type dependencies. Converting HTML dependencies to js.html.*.
+* Allowing quoted strings for identifiers.
+
+I'm not a Typescript developer, so there may be things I overlooked! If
+one of these TODOs is interesting to you, please fork and contribute.
