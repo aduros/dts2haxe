@@ -90,21 +90,25 @@ def render (program):
         if len(type.props) == 1:
             # Special case for apply and array access
             single_prop = type.props[0]
+
             if single_prop.invoke:
                 w_func(single_prop.invoke)
+                return
+
             elif single_prop.dictionary:
                 w("Dynamic<")
                 w_type(single_prop.type)
                 w(">")
-        else:
-            begin_indent()
-            wln("{")
-            for prop in type.props:
-                if not prop.dictionary and not prop.invoke:
-                    w_property(prop, typedef=True)
-                    wln(",")
-            end_indent()
-            w("}")
+                return
+
+        begin_indent()
+        wln("{")
+        for prop in type.props:
+            if not prop.dictionary and not prop.invoke:
+                w_property(prop, typedef=True)
+                wln(",")
+        end_indent()
+        w("}")
 
     def w_property (prop, attributes=None, typedef=False):
         if prop.constructor:
