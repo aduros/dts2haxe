@@ -13,7 +13,7 @@ typedef MyInterface = {
     super_ :Float,
     noType :Dynamic,
     methodSimple :(Void -> Void),
-    methodComplex :(Float -> ?String -> Array<String> -> ?Dynamic -> {
+    methodComplex :(Float -> ?String -> Array<String> -> Dynamic -> {
         x :Float,
         y :Float,
     } -> (String -> ?String -> Array<Float>) -> Array<String> -> Float),
