@@ -13,7 +13,7 @@ typedef MyInterface = {
     super_ :Float,
     noType :Dynamic,
     methodSimple :(Void -> Void),
-    methodComplex :(Float -> ?String -> Array<String> -> {
+    methodComplex :(Float -> ?String -> Array<String> -> ?Dynamic -> {
         x :Float,
         y :Float,
     } -> (String -> ?String -> Array<Float>) -> Array<String> -> Float),
@@ -37,7 +37,7 @@ extern class MyClass
     var super_ :Float;
     var noType :Dynamic;
     function methodSimple () :Void;
-    function methodComplex (n :Float, ?optional :String, list :Array<String>, anonymous :{
+    function methodComplex (n :Float, ?optional :String, list :Array<String>, noType :Dynamic, anonymous :{
         x :Float,
         y :Float,
     }, callback_ :(String -> ?String -> Array<Float>), ?varargs1 :String, ?varargs2 :String, ?varargs3 :String, ?varargs4 :String, ?varargs5 :String, ?varargs6 :String, ?varargs7 :String, ?varargs8 :String, ?varargs9 :String) :Float;

@@ -15,6 +15,7 @@ declare module OUTER {
             n :number,
             optional? :string,
             list :string[],
+            noType,
             anonymous :{x :number; y :number;},
             callback :(event :string, optional? :string) => number[],
             ...varargs :string[]
@@ -37,6 +38,7 @@ declare module OUTER {
             n :number,
             optional? :string,
             list :string[],
+            noType,
             anonymous :{x :number; y :number;},
             callback :(event :string, optional? :string) => number[],
             ...varargs :string[]

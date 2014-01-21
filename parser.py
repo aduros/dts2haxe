@@ -39,25 +39,28 @@ anonymousType = propertyList
 functionType = paramList + ARROW + type_
 type_ << Group((namedType | anonymousType | functionType) + ZeroOrMore(Group(LBRACK + RBRACK)).setResultsName("array")).setResultsName("type")
 
+# The type annotation is optional, will default to Dynamic
+colonType = Optional(COLON + type_)
+
 # Properties
 field = ident + Optional(QUESTION) + Optional(paramList)
 invokeAccess = Group(paramList).setResultsName("invoke")
 dictionaryAccess = LBRACK + ident + COLON + Group(type_).setResultsName("dictionary") + RBRACK
 constructor = CONSTRUCTOR + paramList
 propertyAttribs = ZeroOrMore(STATIC)
-propertyDef = Group(propertyAttribs + (constructor | field | invokeAccess | dictionaryAccess) + Optional(COLON + type_))
+propertyDef = Group(propertyAttribs + (constructor | field | invokeAccess | dictionaryAccess) + colonType)
 propertyList << LBRACE + ZeroOrMore(propertyDef + separator).setResultsName("props") + RBRACE
 
 # Parameters
-optional = ident + QUESTION + COLON + type_
-varargs = ELLIPSES + ident + COLON + type_
-argument = Optional(ident + COLON) + type_
+optional = ident + QUESTION + colonType
+varargs = ELLIPSES + ident + colonType
+argument = ident + colonType
 paramDef = Group(optional | argument | varargs)
 paramList << LPAR + Group(ZeroOrMore(delimitedList(paramDef, ","))).setResultsName("params") + RPAR
 
 # Global vars and functions
-varDecl = Group(VAR + field + Optional(COLON + type_))
-functionDecl = Group(FUNCTION + field + Optional(COLON + type_))
+varDecl = Group(VAR + field + colonType)
+functionDecl = Group(FUNCTION + field + colonType)
 
 # Classes and interfaces
 extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("extends")
