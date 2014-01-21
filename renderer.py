@@ -124,31 +124,26 @@ def render (program):
             w("static ")
 
         method = prop.params != ""
-        if method:
-            if typedef:
-                w_ident(prop.ident)
-                w(" :")
-                w_func(prop)
-                return
-            else:
-                w("function ")
-                w_ident(prop.ident)
-                w(" ")
-                w_params(prop.params)
+        if method and not typedef:
+            w("function ")
+            w_ident(prop.ident)
+            w(" ")
+            w_params(prop.params)
         else:
-            if not typedef: w("var ")
+            if typedef:
+                if prop.optional:
+                    w("?")
+            else:
+                w("var ")
             w_ident(prop.ident)
 
         w(" :")
-        if prop.ident == "new":
+        if typedef and method:
+            w_func(prop)
+        elif prop.ident == "new":
             w("Void")
         else:
-            if prop.optional:
-                w("Null<")
-                w_type(prop.type)
-                w(">")
-            else:
-                w_type(prop.type)
+            w_type(prop.type)
 
     def w_param (param):
         if param.varargs:

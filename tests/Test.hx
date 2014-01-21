@@ -1,12 +1,12 @@
 @:native("OUTER.MyInterface")
 typedef MyInterface = {
     name :String,
-    optional :Null<String>,
+    ?optional :String,
     list :Array<String>,
     anonymousType :{
         x :Float,
         y :Float,
-        optional :Null<String>,
+        ?optional :String,
         method :(Void -> Void),
     },
     @:native("super")
@@ -25,12 +25,12 @@ extern class MyClass
     // implements MyInterface
 {
     var name :String;
-    var optional :Null<String>;
+    var optional :String;
     var list :Array<String>;
     var anonymousType :{
         x :Float,
         y :Float,
-        optional :Null<String>,
+        ?optional :String,
         method :(Void -> Void),
     };
     @:native("super")
