@@ -192,8 +192,7 @@ def render (program):
         #     wln()
 
     def w_native (ident):
-        if package_stack:
-            wln("@:native(\"%s\")" % ".".join(package_stack + [ident]))
+        wln("@:native(\"%s\")" % ".".join(package_stack + [ident]))
 
     def w_class (cl):
         w_native(cl.ident)
@@ -256,6 +255,10 @@ def render (program):
             w_package()
             if package_stack:
                 wln("@:native(\"%s\")" % ".".join(package_stack))
+            else:
+                # TODO(bruno): Will need to be "globals" in NodeJS
+                wln("@:native(\"window\")")
+
             wln("extern class Globals")
             wln("{")
             begin_indent()

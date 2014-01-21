@@ -70,4 +70,13 @@ extern class Globals
 {
     static var globalVar :Float;
     static function globalFunc (n :Float) :Float;
+}@:native("TopLevelClass")
+extern class TopLevelClass
+{
+}
+
+@:native("window")
+extern class Globals
+{
+    static var topLevelGlobal :Float;
 }

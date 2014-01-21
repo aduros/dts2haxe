@@ -11,9 +11,9 @@ def kwd (name):
     return Keyword(name).setResultsName(name)
 CLASS = kwd("class").setResultsName("tsclass")
 CONSTRUCTOR = kwd("constructor")
-DECLARE = Optional(kwd("declare"))
+DECLARE = kwd("declare")
 ENUM = kwd("enum")
-EXPORT = Optional(kwd("export"))
+EXPORT = kwd("export")
 EXTENDS = kwd("extends")
 FUNCTION = kwd("function")
 IMPLEMENTS = kwd("implements")
@@ -56,19 +56,26 @@ paramDef = Group(optional | argument | varargs)
 paramList << LPAR + Group(ZeroOrMore(delimitedList(paramDef, ","))).setResultsName("params") + RPAR
 
 # Global vars and functions
-varDecl = Group(EXPORT + VAR + field + Optional(COLON + type_))
-functionDecl = Group(EXPORT + FUNCTION + field + Optional(COLON + type_))
+varDecl = Group(VAR + field + Optional(COLON + type_))
+functionDecl = Group(FUNCTION + field + Optional(COLON + type_))
 
+# Classes and interfaces
 extends = Group(Optional(EXTENDS + delimitedList(ident, ","))).setResultsName("extends")
 implements = Optional(IMPLEMENTS + Group(delimitedList(ident, ",")).setResultsName("implements"))
 interfaceDecl = Group(INTERFACE + ident - extends + propertyList)
 classDecl = Group(CLASS + ident - extends - implements + propertyList)
+
+# Enums
 enumValue = Group(ident + Optional(EQUALS + Word(nums)))
 enumDecl = Group(ENUM + ident + LBRACE + ZeroOrMore(delimitedList(enumValue, ",")).setResultsName("vals") + Optional(COMMA) + RBRACE)
-moduleDecl = Group(DECLARE + MODULE + ident + LBRACE + ZeroOrMore(typeDecl).setResultsName("entries") + RBRACE)
-typeDecl << Suppress(EXPORT) + (varDecl | functionDecl | interfaceDecl | classDecl | enumDecl | moduleDecl) + ZeroOrMore(SEMI)
 
-program = ZeroOrMore(moduleDecl | typeDecl | SEMI)
+# Modules
+moduleDecl = Group(MODULE + ident + LBRACE + ZeroOrMore(typeDecl).setResultsName("entries") + RBRACE)
+
+typeAttribs = ZeroOrMore(EXPORT | DECLARE)
+typeDecl << Suppress(typeAttribs) + (varDecl | functionDecl | interfaceDecl | classDecl | enumDecl | moduleDecl) + ZeroOrMore(SEMI)
+
+program = ZeroOrMore(typeDecl)
 program.ignore(cppStyleComment)
 
 # We don't support generics, ignore them during parsing

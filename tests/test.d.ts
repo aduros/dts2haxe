@@ -65,3 +65,7 @@ declare module OUTER {
     export var globalVar :number;
     export function globalFunc (n :number) :number;
 }
+
+declare class TopLevelClass {
+}
+declare var topLevelGlobal :number;

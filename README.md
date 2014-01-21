@@ -16,7 +16,7 @@ the output looks like.
 * Classes.
 * Interfaces (mapped to Haxe typedefs).
 * Enums.
-* Module-level globals variables (placed in a generated "Globals" class).
+* Global variables and functions (placed as statics in a generated "Globals" class).
 * Array types.
 * Anonymous types.
 * Varargs methods.
@@ -26,7 +26,6 @@ the output looks like.
 ## What doesn't work yet
 
 * Generics.
-* Top-level declarations outside a module.
 * Method overloading.
 * Certain weird JS patterns that don't map well to Haxe.
 * Splitting generated Haxe into multiple .hx files.
