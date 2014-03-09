@@ -4,6 +4,9 @@ Conversion is decent, but still requires manual tweaking for many
 libraries. Check the tests/ directory to see what's supported and what
 the output looks like.
 
+Also check out https://github.com/Simn/ts2hx for a more complete
+generator.
+
 ## Usage
 
 ```
@@ -30,6 +33,7 @@ the output looks like.
 * Certain weird JS patterns that don't map well to Haxe.
 * Splitting generated Haxe into multiple .hx files.
 * Importing external type dependencies. Converting HTML dependencies to js.html.*.
+* Preserving jsdoc comments in output.
 * Allowing quoted strings for identifiers.
 
 I'm not a Typescript developer, so there may be things I overlooked! If
